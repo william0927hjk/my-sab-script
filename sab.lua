@@ -1,4 +1,4 @@
--- === Fixed SAB Script - Auto Steal Only Targets Brainrots ===
+-- === SAB Script - Auto Steal Balanced ===
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -9,7 +9,7 @@ local character = player.Character or player.CharacterAdded:Wait()
 local root = character:WaitForChild("HumanoidRootPart")
 local humanoid = character:WaitForChild("Humanoid")
 
-print("✅ Fixed SAB Script Loaded - Auto Steal Improved")
+print("✅ SAB Script Loaded - Auto Steal Balanced")
 
 local playerGui = gethui and gethui() or player:WaitForChild("PlayerGui")
 
@@ -26,7 +26,7 @@ Frame.Parent = ScreenGui
 
 Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 12)
 
--- Draggable
+-- Draggable (same as before)
 local dragging = false
 Frame.InputBegan:Connect(function(inp)
     if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
@@ -85,7 +85,7 @@ local noclip = createToggle("Noclip", 170)
 local fly = createToggle("Fly (F)", 210)
 local antiHit = createToggle("Anti-Hit", 250)
 
--- Features
+-- Features (unchanged)
 speed(function(s) pcall(function() humanoid.WalkSpeed = s and 75 or 16 end) end)
 
 local ncConn
@@ -101,7 +101,6 @@ noclip(function(s)
     elseif ncConn then ncConn:Disconnect() end
 end)
 
--- Fly
 local flying, bv
 UserInputService.InputBegan:Connect(function(i, gp)
     if gp or i.KeyCode ~= Enum.KeyCode.F or not fly() then return end
@@ -129,7 +128,7 @@ RunService.Heartbeat:Connect(function()
     end)
 end)
 
--- FIXED Auto Steal - Only Brainrot/Steal Prompts
+-- Balanced Auto Steal
 RunService.Heartbeat:Connect(function()
     if not root then return end
 
@@ -138,15 +137,17 @@ RunService.Heartbeat:Connect(function()
             for _, obj in ipairs(workspace:GetDescendants()) do
                 local prompt = obj:FindFirstChildOfClass("ProximityPrompt")
                 if prompt then
-                    local parentName = obj.Parent and obj.Parent.Name:lower() or ""
-                    local action = prompt.ActionText and prompt.ActionText:lower() or ""
-                    local objName = obj.Name:lower()
+                    local nameLower = (obj.Name or ""):lower()
+                    local parentName = (obj.Parent and obj.Parent.Name or ""):lower()
+                    local action = (prompt.ActionText or ""):lower()
 
-                    -- Only trigger steal-related prompts
-                    if action:find("steal") or action:find("grab") or action:find("take") or 
-                       objName:find("brain") or objName:find("steal") or parentName:find("podium") or parentName:find("base") then
+                    -- Good keywords for steal/brainrot
+                    if nameLower:find("brain") or nameLower:find("steal") or nameLower:find("grab") or 
+                       parentName:find("podium") or parentName:find("base") or parentName:find("animal") or
+                       action:find("steal") or action:find("grab") or action:find("take") then
                         
-                        if (obj.Position - root.Position).Magnitude < 60 then
+                        local distance = (obj.Position - root.Position).Magnitude
+                        if distance < 70 then
                             prompt.HoldDuration = 0
                             fireproximityprompt(prompt)
                         end
