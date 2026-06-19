@@ -4,14 +4,13 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local root = character:WaitForChild("HumanoidRootPart")
 local humanoid = character:WaitForChild("Humanoid")
 
-print("✅ Your SAB Script Loaded! GitHub version.")
+print("✅ Your SAB Script Loaded! GitHub version by william0927hjk")
 
 -- GUI Setup
 local ScreenGui = Instance.new("ScreenGui")
@@ -20,8 +19,8 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = player:WaitForChild("PlayerGui")
 
 local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 320, 0, 480)
-Frame.Position = UDim2.new(0.5, -160, 0.5, -240)
+Frame.Size = UDim2.new(0, 340, 0, 500)
+Frame.Position = UDim2.new(0.5, -170, 0.5, -250)
 Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 Frame.BorderSizePixel = 0
 Frame.Parent = ScreenGui
@@ -81,7 +80,7 @@ local noclipConn
 noclipToggle(function(state)
     if state then
         noclipConn = RunService.Stepped:Connect(function()
-            if character then
+            if character and character.Parent then
                 for _, part in ipairs(character:GetDescendants()) do
                     if part:IsA("BasePart") then
                         part.CanCollide = false
@@ -115,7 +114,7 @@ UserInputService.InputBegan:Connect(function(input, gp)
 end)
 
 RunService.Heartbeat:Connect(function()
-    if flying and bodyVelocity then
+    if flying and bodyVelocity and character then
         local cam = workspace.CurrentCamera
         local dir = Vector3.new()
         if UserInputService:IsKeyDown(Enum.KeyCode.W) then dir += cam.CFrame.LookVector end
@@ -126,18 +125,18 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- Main Loop - Auto Steal & Collect
+-- Main Loop
 RunService.Heartbeat:Connect(function()
-    if not character or not root then return end
+    if not character or not root or not root.Parent then return end
     
     -- Auto Steal
     if autoStealToggle() then
         for _, obj in ipairs(workspace:GetDescendants()) do
             local prompt = obj:FindFirstChildOfClass("ProximityPrompt")
-            if prompt and (obj.Name:lower():find("brain") or obj.Name:lower():find("steal") or obj.Name:lower():find("base") or obj.Name:lower():find("grab")) then
+            if prompt and (obj.Name:lower():find("brain") or obj.Name:lower():find("steal") or obj.Name:lower():find("base") or obj.Name:lower():find("grab") or obj.Name:lower():find("collect")) then
                 pcall(function()
                     prompt.HoldDuration = 0
-                    fireproximityprompt(prompt)
+                    fireproximityprompt(prompt, 0)
                 end)
             end
         end
@@ -146,9 +145,9 @@ RunService.Heartbeat:Connect(function()
     -- Auto Collect Cash / Drops
     if autoCollectToggle() then
         for _, drop in ipairs(workspace:GetDescendants()) do
-            if drop.Name:lower():find("cash") or drop.Name:lower():find("money") or drop.Name:lower():find("drop") then
+            if drop.Name:lower():find("cash") or drop.Name:lower():find("money") or drop.Name:lower():find("drop") or drop.Name:lower():find("coin") then
                 pcall(function()
-                    if (drop.Position - root.Position).Magnitude < 80 then
+                    if drop.Position and (drop.Position - root.Position).Magnitude < 80 then
                         root.CFrame = CFrame.new(drop.Position)
                     end
                 end)
@@ -168,9 +167,9 @@ end)
 -- Character Respawn Handler
 player.CharacterAdded:Connect(function(newChar)
     character = newChar
-    root = newChar:WaitForChild("HumanoidRootPart")
-    humanoid = newChar:WaitForChild("Humanoid")
-    print("Character respawned - features restored")
+    root = newChar:WaitForChild("HumanoidRootPart", 5)
+    humanoid = newChar:WaitForChild("Humanoid", 5)
+    print("✅ Character respawned - features restored")
 end)
 
-print("✅ All features ready. Toggle them in the GUI!")
+print("✅ All features ready. Toggle them in the GUI! (Press F for Fly)")
