@@ -1,6 +1,5 @@
--- === Custom SAB Script for Delta Executor ===
--- Host this on your GitHub and update anytime
--- Features: Auto Steal, Auto Collect, Speed, Noclip, Fly, GUI
+-- === Your Custom SAB Script - Improved for Delta ===
+-- Update this file anytime and it auto-updates for users
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -9,119 +8,161 @@ local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
+local root = character:WaitForChild("HumanoidRootPart")
 local humanoid = character:WaitForChild("Humanoid")
 
--- Simple GUI (using Synapse-like drawing or basic ScreenGui)
+print("Your SAB Script Loaded! GitHub version.")
+
+-- GUI Setup
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Parent = player:WaitForChild("PlayerGui")
+ScreenGui.Name = "YourSABGui"
 ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
 
 local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 300, 0, 400)
-Frame.Position = UDim2.new(0.5, -150, 0.5, -200)
-Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Frame.Size = UDim2.new(0, 320, 0, 450)
+Frame.Position = UDim2.new(0.5, -160, 0.5, -225)
+Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Frame.BorderSizePixel = 0
 Frame.Parent = ScreenGui
 
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 50)
-Title.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+Title.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 Title.Text = "Your SAB Script"
 Title.TextColor3 = Color3.new(1,1,1)
 Title.TextScaled = true
 Title.Parent = Frame
 
--- Toggles
-local toggles = {}
-local function createToggle(name, yOffset, callback)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.9, 0, 0, 40)
-    btn.Position = UDim2.new(0.05, 0, 0, yOffset)
-    btn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-    btn.Text = name .. ": OFF"
-    btn.TextColor3 = Color3.new(1,1,1)
-    btn.Parent = Frame
+local function createToggle(name, yPos, default)
+    local toggle = Instance.new("TextButton")
+    toggle.Size = UDim2.new(0.9, 0, 0, 45)
+    toggle.Position = UDim2.new(0.05, 0, 0, yPos)
+    toggle.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    toggle.Text = name .. ": OFF"
+    toggle.TextColor3 = Color3.new(1,1,1)
+    toggle.TextScaled = true
+    toggle.Parent = Frame
     
-    local enabled = false
-    btn.MouseButton1Click:Connect(function()
+    local enabled = default or false
+    local function updateUI()
+        toggle.Text = name .. ": " .. (enabled and "ON" or "OFF")
+        toggle.BackgroundColor3 = enabled and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(60, 60, 60)
+    end
+    updateUI()
+    
+    toggle.MouseButton1Click:Connect(function()
         enabled = not enabled
-        btn.Text = name .. ": " .. (enabled and "ON" or "OFF")
-        btn.BackgroundColor3 = enabled and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(70, 70, 70)
-        if callback then callback(enabled) end
+        updateUI()
     end)
+    
     return function() return enabled end
 end
 
--- Features
-local autoSteal = createToggle("Auto Steal", 60, function(state) end)
-local autoCollect = createToggle("Auto Collect Cash", 110, function(state) end)
-local speedHack = createToggle("Speed Hack", 160, function(state)
+-- Toggles
+local autoStealToggle = createToggle("Auto Steal (Instant)", 60, false)
+local autoCollectToggle = createToggle("Auto Collect", 115, false)
+local speedToggle = createToggle("Speed Hack", 170, false)
+local noclipToggle = createToggle("Noclip", 225, false)
+local flyToggle = createToggle("Fly (Press F)", 280, false)
+local antiHitToggle = createToggle("Anti-Hit / Godmode", 335, false)
+
+-- Speed Hack
+speedToggle(function(state)
     if state then
-        humanoid.WalkSpeed = 100
+        humanoid.WalkSpeed = 80
     else
         humanoid.WalkSpeed = 16
     end
 end)
-local noclip = createToggle("Noclip", 210, function(state) end)
-local fly = createToggle("Fly (F key)", 260, function(state) end)
 
--- Basic Auto Steal / Collect logic (adapt to game specifics)
-local connections = {}
+-- Noclip
+local noclipConn
+noclipToggle(function(state)
+    if state then
+        noclipConn = RunService.Stepped:Connect(function()
+            if character then
+                for _, part in ipairs(character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
+                    end
+                end
+            end
+        end)
+    else
+        if noclipConn then noclipConn:Disconnect() end
+    end
+end)
+
+-- Fly (F key)
+local flying = false
+local bodyVelocity
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if input.KeyCode == Enum.KeyCode.F and flyToggle() then
+        flying = not flying
+        local rootPart = character:FindFirstChild("HumanoidRootPart")
+        if flying and rootPart then
+            bodyVelocity = Instance.new("BodyVelocity")
+            bodyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+            bodyVelocity.Velocity = Vector3.new(0,0,0)
+            bodyVelocity.Parent = rootPart
+        elseif bodyVelocity then
+            bodyVelocity:Destroy()
+            bodyVelocity = nil
+        end
+    end
+end)
+
 RunService.Heartbeat:Connect(function()
-    if autoSteal() and character and character:FindFirstChild("HumanoidRootPart") then
-        -- Example: Find nearby brainrots / steal prompts (you'll need to inspect game for exact paths)
+    if flying and bodyVelocity then
+        local cam = workspace.CurrentCamera
+        local dir = Vector3.new()
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then dir += cam.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then dir -= cam.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then dir -= cam.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then dir += cam.CFrame.RightVector end
+        bodyVelocity.Velocity = dir.Unit * 60
+    end
+end)
+
+-- Main Loop - Auto Steal & Collect
+RunService.Heartbeat:Connect(function()
+    if not character or not root then return end
+    
+    -- Auto Steal
+    if autoStealToggle() then
         for _, obj in ipairs(workspace:GetDescendants()) do
-            if obj.Name:lower():find("brainrot") or obj.Name:lower():find("steal") then
-                -- Add proximity prompt firing or teleport logic here
+            local prompt = obj:FindFirstChildOfClass("ProximityPrompt")
+            if prompt and (obj.Name:lower():find("brain") or obj.Name:lower():find("steal") or obj.Name:lower():find("base")) then
                 pcall(function()
-                    fireproximityprompt(obj:FindFirstChildOfClass("ProximityPrompt"))
+                    prompt.HoldDuration = 0
+                    fireproximityprompt(prompt)
                 end)
             end
         end
     end
     
-    if autoCollect() then
-        -- Auto collect cash / items logic - inspect workspace for cash drops
-    end
-end)
-
--- Noclip
-connections.noclip = RunService.Stepped:Connect(function()
-    if noclip() and character then
-        for _, part in pairs(character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = false
+    -- Auto Collect Cash / Drops
+    if autoCollectToggle() then
+        for _, drop in ipairs(workspace:GetDescendants()) do
+            if drop.Name:lower():find("cash") or drop.Name:lower():find("money") then
+                pcall(function()
+                    if (drop.Position - root.Position).Magnitude < 50 then
+                        root.CFrame = CFrame.new(drop.Position)
+                    end
+                end)
             end
         end
     end
-end)
-
--- Simple Fly (F key toggle)
-local flying = false
-local bv
-UserInputService.InputBegan:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.F and fly() then
-        flying = not flying
-        if flying then
-            bv = Instance.new("BodyVelocity")
-            bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-            bv.Velocity = Vector3.new(0,0,0)
-            bv.Parent = character:FindFirstChild("HumanoidRootPart")
-        else
-            if bv then bv:Destroy() end
-        end
+    
+    -- Basic Anti-Hit
+    if antiHitToggle() then
+        pcall(function()
+            humanoid.PlatformStand = false
+            -- Add more anti-ragdoll if needed
+        end)
     end
 end)
 
-RunService.Heartbeat:Connect(function()
-    if flying and bv then
-        local cam = workspace.CurrentCamera
-        local moveDir = Vector3.new()
-        if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + cam.CFrame.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - cam.CFrame.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - cam.CFrame.RightVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + cam.CFrame.RightVector end
-        bv.Velocity = moveDir.Unit * 50
-    end
-end)
-
-print("Your SAB Script loaded! Customize further.")
+-- Character Respawn
