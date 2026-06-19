@@ -1,5 +1,4 @@
--- === Your SAB Script - FIXED & Enhanced (william0927hjk) ===
--- Reference: Clean GUI + Robust structure
+-- === Simple & Strong SAB Script - Draggable GUI ===
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -10,195 +9,152 @@ local character = player.Character or player.CharacterAdded:Wait()
 local root = character:WaitForChild("HumanoidRootPart")
 local humanoid = character:WaitForChild("Humanoid")
 
-print("✅ Your SAB Script Loaded! (Fixed Auto Steal)")
+print("✅ Simple SAB Script Loaded - Drag GUI to side!")
 
--- Safe GUI Parent
-local function GetSafeGui()
-    if gethui then return gethui() end
-    return player:WaitForChild("PlayerGui")
-end
+local playerGui = gethui and gethui() or player:WaitForChild("PlayerGui")
 
-local playerGui = GetSafeGui()
-
--- GUI Setup (Reference style)
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "YourSABGui"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = playerGui
 
 local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 360, 0, 540)
-Frame.Position = UDim2.new(0.5, -180, 0.5, -270)
-Frame.BackgroundColor3 = Color3.fromRGB(16, 24, 39)
+Frame.Size = UDim2.new(0, 250, 0, 320)
+Frame.Position = UDim2.new(0, 30, 0.4, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
 Frame.BorderSizePixel = 0
 Frame.Parent = ScreenGui
 
--- Corner + Gradient
-local corner = Instance.new("UICorner", Frame)
-corner.CornerRadius = UDim.new(0, 20)
+Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 12)
 
-local grad = Instance.new("UIGradient", Frame)
-grad.Rotation = 35
-grad.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(12, 18, 32)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(21, 30, 47)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 82, 120))
-}
-
-local stroke1 = Instance.new("UIStroke", Frame)
-stroke1.Thickness = 2
-stroke1.Color = Color3.fromRGB(56, 189, 248)
-stroke1.Transparency = 0.2
-
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -20, 0, 50)
-Title.Position = UDim2.new(0, 10, 0, 10)
-Title.BackgroundTransparency = 1
-Title.Text = "Your SAB Script"
-Title.TextColor3 = Color3.fromRGB(241, 245, 249)
-Title.TextScaled = true
-Title.Font = Enum.Font.GothamBold
-Title.Parent = Frame
-
-local function createToggle(name, yPos, default)
-    local toggle = Instance.new("TextButton")
-    toggle.Size = UDim2.new(0.9, 0, 0, 50)
-    toggle.Position = UDim2.new(0.05, 0, 0, yPos)
-    toggle.BackgroundColor3 = Color3.fromRGB(30, 41, 59)
-    toggle.Text = name .. ": OFF"
-    toggle.TextColor3 = Color3.fromRGB(241, 245, 249)
-    toggle.TextScaled = true
-    toggle.Font = Enum.Font.GothamSemibold
-    toggle.Parent = Frame
-
-    local tCorner = Instance.new("UICorner", toggle)
-    tCorner.CornerRadius = UDim.new(0, 12)
-
-    local enabled = default or false
-    local function updateUI()
-        toggle.Text = name .. ": " .. (enabled and "ON" or "OFF")
-        toggle.BackgroundColor3 = enabled and Color3.fromRGB(52, 180, 230) or Color3.fromRGB(30, 41, 59)
+-- Draggable
+local dragging, dragStart, startPos
+Frame.InputBegan:Connect(function(inp)
+    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = inp.Position
+        startPos = Frame.Position
     end
-    updateUI()
-
-    toggle.MouseButton1Click:Connect(function()
-        enabled = not enabled
-        updateUI()
-    end)
-
-    return function() return enabled end
-end
-
--- Toggles
-local autoStealToggle = createToggle("Auto Steal (Instant)", 80, false)
-local autoCollectToggle = createToggle("Auto Collect", 140, false)
-local speedToggle = createToggle("Speed Hack", 200, false)
-local noclipToggle = createToggle("Noclip", 260, false)
-local flyToggle = createToggle("Fly (Press F)", 320, false)
-local antiHitToggle = createToggle("Anti-Hit", 380, false)
-
--- Speed
-speedToggle(function(state)
-    humanoid.WalkSpeed = state and 80 or 16
 end)
 
+UserInputService.InputChanged:Connect(function(inp)
+    if dragging and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
+        local delta = inp.Position - dragStart
+        Frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+Frame.InputEnded:Connect(function(inp)
+    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
+
+-- Title
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1,0,0,35)
+title.BackgroundTransparency = 1
+title.Text = "SAB Script"
+title.TextColor3 = Color3.fromRGB(0, 200, 255)
+title.TextScaled = true
+title.Font = Enum.Font.GothamBold
+title.Parent = Frame
+
+local function createToggle(name, y)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0.9,0,0,36)
+    btn.Position = UDim2.new(0.05,0,0,y)
+    btn.BackgroundColor3 = Color3.fromRGB(45,45,60)
+    btn.Text = name..": OFF"
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.TextScaled = true
+    btn.Font = Enum.Font.GothamSemibold
+    btn.Parent = Frame
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
+
+    local on = false
+    btn.MouseButton1Click:Connect(function()
+        on = not on
+        btn.Text = name..": "..(on and "ON" or "OFF")
+        btn.BackgroundColor3 = on and Color3.fromRGB(0,180,0) or Color3.fromRGB(45,45,60)
+    end)
+    return function() return on end
+end
+
+local autoSteal = createToggle("Auto Steal", 45)
+local autoCollect = createToggle("Auto Collect", 88)
+local speed = createToggle("Speed", 131)
+local noclip = createToggle("Noclip", 174)
+local fly = createToggle("Fly (F)", 217)
+local anti = createToggle("Anti-Hit", 260)
+
+-- Speed
+speed(function(s) humanoid.WalkSpeed = s and 80 or 16 end)
+
 -- Noclip
-local noclipConn
-noclipToggle(function(state)
-    if state then
-        noclipConn = RunService.Stepped:Connect(function()
-            if character then
-                for _, part in ipairs(character:GetDescendants()) do
-                    if part:IsA("BasePart") then part.CanCollide = false end
-                end
+local nc
+noclip(function(s)
+    if s then
+        nc = RunService.Stepped:Connect(function()
+            for _,p in character:GetDescendants() do
+                if p:IsA("BasePart") then p.CanCollide = false end
             end
         end)
-    else
-        if noclipConn then noclipConn:Disconnect() end
-    end
+    elseif nc then nc:Disconnect() end
 end)
 
 -- Fly
-local flying = false
-local bodyVelocity
-UserInputService.InputBegan:Connect(function(input, gp)
-    if gp then return end
-    if input.KeyCode == Enum.KeyCode.F and flyToggle() then
-        flying = not flying
-        local rp = character:FindFirstChild("HumanoidRootPart")
-        if flying and rp then
-            bodyVelocity = Instance.new("BodyVelocity")
-            bodyVelocity.MaxForce = Vector3.new(1e5,1e5,1e5)
-            bodyVelocity.Velocity = Vector3.new(0,0,0)
-            bodyVelocity.Parent = rp
-        elseif bodyVelocity then
-            bodyVelocity:Destroy()
-            bodyVelocity = nil
-        end
-    end
+local flying, bv
+UserInputService.InputBegan:Connect(function(i,gp)
+    if gp or i.KeyCode ~= Enum.KeyCode.F or not fly() then return end
+    flying = not flying
+    if flying then
+        bv = Instance.new("BodyVelocity")
+        bv.MaxForce = Vector3.new(math.huge,math.huge,math.huge)
+        bv.Parent = root
+    elseif bv then bv:Destroy() bv = nil end
 end)
 
 RunService.Heartbeat:Connect(function()
-    if flying and bodyVelocity and character then
+    if flying and bv then
         local cam = workspace.CurrentCamera
         local dir = Vector3.new()
         if UserInputService:IsKeyDown(Enum.KeyCode.W) then dir += cam.CFrame.LookVector end
         if UserInputService:IsKeyDown(Enum.KeyCode.S) then dir -= cam.CFrame.LookVector end
         if UserInputService:IsKeyDown(Enum.KeyCode.A) then dir -= cam.CFrame.RightVector end
         if UserInputService:IsKeyDown(Enum.KeyCode.D) then dir += cam.CFrame.RightVector end
-        bodyVelocity.Velocity = dir.Unit * 60
+        bv.Velocity = dir.Unit * 60
     end
 end)
 
--- FIXED Auto Features
+-- Strong Auto Steal (searches ALL prompts)
 RunService.Heartbeat:Connect(function()
-    if not character or not root then return end
+    if not root then return end
 
-    -- Auto Steal (Improved for SAB Plots + Podiums)
-    if autoStealToggle() then
-        pcall(function()
-            local plots = workspace:FindFirstChild("Plots")
-            if plots then
-                for _, plot in ipairs(plots:GetChildren()) do
-                    local podiums = plot:FindFirstChild("AnimalPodiums")
-                    if podiums then
-                        for _, podium in ipairs(podiums:GetChildren()) do
-                            local base = podium:FindFirstChild("Base")
-                            if base then
-                                local spawn = base:FindFirstChild("Spawn")
-                                if spawn then
-                                    local attach = spawn:FindFirstChild("PromptAttachment") or spawn:FindFirstChildWhichIsA("Attachment")
-                                    if attach then
-                                        local prompt = attach:FindFirstChildOfClass("ProximityPrompt")
-                                        if prompt then
-                                            prompt.HoldDuration = 0
-                                            fireproximityprompt(prompt)
-                                        end
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
+    if autoSteal() then
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            local prompt = obj:FindFirstChildOfClass("ProximityPrompt")
+            if prompt then
+                pcall(function()
+                    prompt.HoldDuration = 0
+                    fireproximityprompt(prompt)
+                end)
             end
-        end)
+        end
     end
 
-    -- Auto Collect
-    if autoCollectToggle() then
-        for _, drop in ipairs(workspace:GetDescendants()) do
-            if drop.Name:lower():find("cash") or drop.Name:lower():find("money") or drop.Name:lower():find("drop") then
+    if autoCollect() then
+        for _, v in ipairs(workspace:GetDescendants()) do
+            if v.Name:lower():find("cash") or v.Name:lower():find("money") or v.Name:lower():find("drop") then
                 pcall(function()
-                    if drop.Position and (drop.Position - root.Position).Magnitude < 100 then
-                        root.CFrame = CFrame.new(drop.Position)
+                    if (v.Position - root.Position).Magnitude < 100 then
+                        root.CFrame = CFrame.new(v.Position)
                     end
                 end)
             end
         end
     end
 
-    -- Anti-Hit
-    if antiHitToggle() then
+    if anti() then
         pcall(function()
             humanoid.PlatformStand = false
             humanoid:ChangeState(Enum.HumanoidStateType.Running)
@@ -206,11 +162,10 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- Respawn Handler
-player.CharacterAdded:Connect(function(newChar)
-    character = newChar
-    root = newChar:WaitForChild("HumanoidRootPart", 5)
-    humanoid = newChar:WaitForChild("Humanoid", 5)
+player.CharacterAdded:Connect(function(c)
+    character = c
+    root = c:WaitForChild("HumanoidRootPart")
+    humanoid = c:WaitForChild("Humanoid")
 end)
 
-print("✅ GUI + Auto Steal ready. Test near other bases!")
+print("✅ Drag the small box to the side. Turn Auto Steal on near other players' bases.")
