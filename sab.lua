@@ -1,4 +1,4 @@
--- === Your SAB Script - Based on Working 2026 Versions ===
+-- === Will's Custom Hub - SAB Edition (Rebranded) ===
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -9,7 +9,7 @@ local character = player.Character or player.CharacterAdded:Wait()
 local root = character:WaitForChild("HumanoidRootPart")
 local humanoid = character:WaitForChild("Humanoid")
 
-print("✅ Your SAB Script (Refined) Loaded")
+print("✅ Will's Custom Hub Loaded for SAB")
 
 local playerGui = gethui and gethui() or player:WaitForChild("PlayerGui")
 
@@ -18,17 +18,33 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = playerGui
 
 local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 260, 0, 360)
-Frame.Position = UDim2.new(0, 20, 0.3, 0)
-Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 35)
+Frame.Size = UDim2.new(0, 300, 0, 420)
+Frame.Position = UDim2.new(0, 30, 0.2, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(15, 15, 30)
 Frame.BorderSizePixel = 0
 Frame.Parent = ScreenGui
 
 Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 12)
 
--- Draggable GUI
+-- Title Bar (Nameless-style)
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 40)
+TitleBar.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
+TitleBar.Parent = Frame
+Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0, 12)
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -80, 1, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "Will's Custom Hub"
+Title.TextColor3 = Color3.new(1,1,1)
+Title.TextScaled = true
+Title.Font = Enum.Font.GothamBold
+Title.Parent = TitleBar
+
+-- Draggable
 local dragging = false
-Frame.InputBegan:Connect(function(inp)
+TitleBar.InputBegan:Connect(function(inp)
     if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
         dragging = true
         local dragStart = inp.Position
@@ -45,20 +61,11 @@ Frame.InputBegan:Connect(function(inp)
     end
 end)
 
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1,0,0,40)
-title.BackgroundTransparency = 1
-title.Text = "Your SAB Script"
-title.TextColor3 = Color3.fromRGB(0, 200, 255)
-title.TextScaled = true
-title.Font = Enum.Font.GothamBold
-title.Parent = Frame
-
 local function createToggle(name, y)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.9,0,0,36)
+    btn.Size = UDim2.new(0.9,0,0,40)
     btn.Position = UDim2.new(0.05,0,0,y)
-    btn.BackgroundColor3 = Color3.fromRGB(45,45,60)
+    btn.BackgroundColor3 = Color3.fromRGB(40,40,60)
     btn.Text = name .. ": OFF"
     btn.TextColor3 = Color3.new(1,1,1)
     btn.TextScaled = true
@@ -70,28 +77,32 @@ local function createToggle(name, y)
     btn.MouseButton1Click:Connect(function()
         on = not on
         btn.Text = name .. ": " .. (on and "ON" or "OFF")
-        btn.BackgroundColor3 = on and Color3.fromRGB(0,180,0) or Color3.fromRGB(45,45,60)
+        btn.BackgroundColor3 = on and Color3.fromRGB(0, 180, 80) or Color3.fromRGB(40,40,60)
     end)
     return function() return on end
 end
 
-local autoSteal = createToggle("Auto Steal", 50)
-local autoCollect = createToggle("Auto Collect", 95)
-local speed = createToggle("Speed", 140)
-local noclip = createToggle("Noclip", 185)
-local fly = createToggle("Fly (F)", 230)
-local antiHit = createToggle("Anti-Hit", 275)
+local autoSteal = createToggle("Auto Steal", 60)
+local autoCollect = createToggle("Auto Collect", 110)
+local speed = createToggle("Speed Hack", 160)
+local noclip = createToggle("Noclip", 210)
+local fly = createToggle("Fly (F)", 260)
+local antiHit = createToggle("Anti-Hit", 310)
 
--- Basic Features
+-- Features
 speed(function(s) pcall(function() humanoid.WalkSpeed = s and 80 or 16 end) end)
 
 local ncConn
 noclip(function(s)
-    if s then ncConn = RunService.Stepped:Connect(function()
-        pcall(function()
-            for _, p in character:GetDescendants() do if p:IsA("BasePart") then p.CanCollide = false end end
+    if s then
+        ncConn = RunService.Stepped:Connect(function()
+            pcall(function()
+                for _, p in character:GetDescendants() do
+                    if p:IsA("BasePart") then p.CanCollide = false end
+                end
+            end)
         end)
-    end) elseif ncConn then ncConn:Disconnect() end
+    elseif ncConn then ncConn:Disconnect() end
 end)
 
 -- Fly
@@ -122,7 +133,7 @@ RunService.Heartbeat:Connect(function()
     end)
 end)
 
--- Stronger Auto Steal
+-- Auto Steal (Balanced)
 RunService.Heartbeat:Connect(function()
     if not root then return end
 
@@ -135,7 +146,7 @@ RunService.Heartbeat:Connect(function()
                     local pn = (obj.Parent and obj.Parent.Name or ""):lower()
                     local a = (prompt.ActionText or ""):lower()
                     if n:find("brain") or n:find("steal") or n:find("grab") or pn:find("podium") or pn:find("base") or a:find("steal") or a:find("grab") then
-                        if (obj.Position - root.Position).Magnitude < 65 then
+                        if (obj.Position - root.Position).Magnitude < 70 then
                             prompt.HoldDuration = 0
                             fireproximityprompt(prompt)
                         end
@@ -170,3 +181,5 @@ player.CharacterAdded:Connect(function(c)
     root = c:WaitForChild("HumanoidRootPart")
     humanoid = c:WaitForChild("Humanoid")
 end)
+
+print("✅ Drag the GUI. Turn on Auto Steal near brainrots.")
